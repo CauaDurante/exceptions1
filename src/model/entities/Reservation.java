@@ -1,4 +1,6 @@
-package modelo.entities;
+package model.entities;
+
+import model.exception.DomainException;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -7,14 +9,17 @@ import java.time.format.DateTimeFormatter;
 public class Reservation {
 
     private Integer roomNumber;
-    private LocalDate chekIn;
+    private LocalDate checkIn;
     private LocalDate checkOut;
 
     private static DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    public Reservation(Integer roomNumber, LocalDate chekIn, LocalDate checkOut) {
+    public Reservation(Integer roomNumber, LocalDate checkIn, LocalDate checkOut) throws DomainException{
+        if (!checkOut.isAfter(checkIn)){
+            throw new DomainException("Check-out date must be after check-in date");
+        }
         this.roomNumber = roomNumber;
-        this.chekIn = chekIn;
+        this.checkIn = checkIn;
         this.checkOut = checkOut;
     }
 
@@ -27,7 +32,7 @@ public class Reservation {
     }
 
     public LocalDate getChekIn() {
-        return chekIn;
+        return checkIn;
     }
 
     public LocalDate getCheckOut() {
@@ -35,20 +40,22 @@ public class Reservation {
     }
 
     public long duration(){
-        Duration d1 = Duration.between(chekIn.atTime(0, 0), checkOut.atTime(0, 0));
+        Duration d1 = Duration.between(checkIn.atTime(0, 0), checkOut.atTime(0, 0));
         return d1.toDays();
     }
 
-    public String updateDates(LocalDate checkIn, LocalDate checkOut){
+    //throws indica que o metodo pode lançar a exceção sinalizada, isso propaga a exceção
+    //através da pilha de chamada dos métodos
+    public void updateDates(LocalDate checkIn, LocalDate checkOut) throws DomainException{
         if (checkIn.isBefore(LocalDate.now()) || checkOut.isBefore(LocalDate.now())){
-            return "Reservation dates for update must be future dates";
+            throw new DomainException("Reservation dates for update must be future dates");
+            //lançada exceção para entrada de dados inválidas
         }
         if (!checkOut.isAfter(checkIn)){
-             return "Check-out date must be after check-in date";
+             throw new DomainException("Check-out date must be after check-in date");
         }
-        this.chekIn = checkIn;
+        this.checkIn = checkIn;
         this.checkOut = checkOut;
-        return null;
     }
 
     @Override
@@ -56,7 +63,7 @@ public class Reservation {
         return "Room "
                 + roomNumber
                 + ", check-in: "
-                + fmt.format(chekIn)
+                + fmt.format(checkIn)
                 + ", check-out: "
                 + fmt.format(checkOut)
                 + ", "
